@@ -2,12 +2,12 @@ import { useLoaderData, useSubmit, useNavigation, useActionData } from "react-ro
 import { 
   Page, Layout, Card, Text, TextField, Button, BlockStack, 
   Banner, Box, InlineStack, Badge, Divider, Tabs, Modal, 
-  EmptyState, Icon
+  EmptyState, Icon, Link 
 } from "@shopify/polaris";
-// İkonları Polaris'in içinden, SVG path olarak alacağız (En garantisi bu)
+// İkonları Polaris'in içinden alıyoruz (EmailIcon eklendi)
 import { 
   PersonIcon, ChatIcon, DeleteIcon, EditIcon, 
-  CheckCircleIcon, AlertCircleIcon, StoreIcon 
+  CheckCircleIcon, AlertCircleIcon, StoreIcon, EmailIcon 
 } from "@shopify/polaris-icons";
 import { useState, useEffect } from "react";
 import db from "../db.server";
@@ -142,10 +142,25 @@ export default function Index() {
                             {/* SORU KUTUSU */}
                             <Box background="bg-surface-secondary" padding="400" borderRadius="200">
                               <BlockStack gap="200">
-                                <InlineStack gap="200" align="start">
-                                  <Icon source={PersonIcon} tone="subdued" />
-                                  <Text fontWeight="bold">{q.customer || "Ziyaretçi"} Sorusu:</Text>
+                                
+                                {/* Müşteri Bilgisi ve Email Alanı - YENİ */}
+                                <InlineStack gap="400" align="start" blockAlign="center">
+                                  <InlineStack gap="200">
+                                    <Icon source={PersonIcon} tone="subdued" />
+                                    <Text fontWeight="bold">{q.customer || "Ziyaretçi"}</Text>
+                                  </InlineStack>
+
+                                  {/* Varsa E-maili Göster */}
+                                  {q.email && (
+                                    <InlineStack gap="100">
+                                      <Icon source={EmailIcon} tone="subdued" />
+                                      <Link url={`mailto:${q.email}`} removeUnderline monochrome>
+                                        <Text variant="bodySm" tone="subdued">{q.email}</Text>
+                                      </Link>
+                                    </InlineStack>
+                                  )}
                                 </InlineStack>
+
                                 <Box paddingInlineStart="800">
                                   <Text variant="bodyMd">{q.question}</Text>
                                 </Box>

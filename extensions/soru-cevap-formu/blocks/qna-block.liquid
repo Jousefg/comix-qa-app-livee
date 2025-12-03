@@ -32,7 +32,7 @@
     
     <div style="display: flex; gap: 15px; margin-bottom: 15px;">
       <input type="text" name="customer" placeholder="Adınız" required style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-      <input type="email" name="email" placeholder="E-posta (Gizli)" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+      <input type="email" name="email" placeholder="E-posta (Yayınlanmaz)" required style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
     </div>
 
     <textarea name="question" rows="3" placeholder="Sorunuzu buraya yazınız..." required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 15px;"></textarea>
@@ -57,7 +57,6 @@ document.addEventListener("DOMContentLoaded", function() {
   var container = document.getElementById("comix-qna-list-target");
 
   // 1. SORULARI ÇEK
-  // Cache kırmak için &t= ekledik
   fetch("/apps/destek?productId=" + productId + "&t=" + new Date().getTime())
     .then(r => r.json())
     .then(d => {

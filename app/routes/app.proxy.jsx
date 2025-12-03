@@ -190,18 +190,20 @@ export const loader = async ({ request }) => {
 };
 
 // --- ACTION (POST): Save Question ---
+// ... üst kısımlar aynı ...
 export const action = async ({ request }) => {
   const { session } = await authenticate.public.appProxy(request);
-  // We proceed even if session is missing to avoid blocking users
-  
   const formData = await request.formData();
+  
   const productId = formData.get("productId");
   const productTitle = formData.get("productTitle");
   const customer = formData.get("customer") || "Ziyaretçi";
   const question = formData.get("question");
+  const email = formData.get("email"); // <--- MAİLİ ALIYORUZ
 
-  if (!question || !productId) {
-    return { success: false, message: "Eksik bilgi." };
+  // Email kontrolü
+  if (!question || !productId || !email) {
+    return { success: false, message: "Lütfen e-posta adresinizi ve sorunuzu eksiksiz girin." };
   }
 
   await db.question.create({
@@ -209,13 +211,11 @@ export const action = async ({ request }) => {
       productId: String(productId),
       productName: String(productTitle),
       customer: String(customer),
+      email: String(email), // <--- DB'YE YAZIYORUZ
       question: String(question),
       status: "PENDING"
     }
   });
 
-  return { 
-    success: true,
-    message: "Sorunuz başarıyla alındı. Onaylandıktan sonra yayınlanacaktır." 
-  };
+  return { success: true, message: "Sorunuz alındı! Yanıtlandığında mail gelecektir." };
 };
