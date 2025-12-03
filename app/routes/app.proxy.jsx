@@ -1,27 +1,29 @@
 import db from "../db.server";
 import { authenticate } from "../shopify.server";
 
-// --- LOADER (GET): Sends Minimalist Black & White HTML ---
+// --- LOADER (GET): Siteye HTML Slider'ı ve Okları Gönderir ---
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
   const productId = url.searchParams.get("productId");
 
   if (!productId) return new Response("", { status: 400 });
 
-  // 1. Fetch Approved Questions
+  // 1. Soruları Çek
   const questions = await db.question.findMany({
     where: { productId: String(productId), status: "PUBLISHED" },
     orderBy: { createdAt: "desc" }
   });
 
+  // Soru yoksa boş dön
   if (questions.length === 0) return { html: "" };
 
-  // 2. BLACK & WHITE HTML DESIGN 🏴🏳️
+  // 2. HTML TASARIMI (OKLAR EKLENDİ + SİYAH BEYAZ) 🏴🏳️
   const htmlContent = `
     <style>
       .qa-bw-container {
         margin: 50px 0;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        position: relative;
       }
       .qa-bw-header {
         text-align: center;
@@ -49,7 +51,33 @@ export const loader = async ({ request }) => {
         border-radius: 2px;
       }
       
-      /* SLIDER */
+      /* SLIDER VE OKLAR */
+      .qa-slider-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .qa-nav-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid #000;
+        color: #000;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        z-index: 2;
+      }
+      .qa-nav-btn:hover {
+        background: #000;
+        color: #fff;
+      }
+      
       .qa-bw-slider {
         display: flex;
         gap: 20px;
@@ -57,12 +85,13 @@ export const loader = async ({ request }) => {
         padding-bottom: 20px;
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
+        width: 100%;
       }
       .qa-bw-slider::-webkit-scrollbar { height: 4px; }
       .qa-bw-slider::-webkit-scrollbar-track { background: #eee; }
       .qa-bw-slider::-webkit-scrollbar-thumb { background: #000; }
 
-      /* CARD */
+      /* KART TASARIMI */
       .qa-bw-card {
         min-width: 300px;
         max-width: 340px;
@@ -75,76 +104,30 @@ export const loader = async ({ request }) => {
       }
       .qa-bw-card:hover {
         border-color: #000;
-        box-shadow: 4px 4px 0px #000; /* Brutalist shadow effect */
+        box-shadow: 4px 4px 0px #000;
         transform: translateY(-2px);
       }
 
-      /* QUESTION PART */
-      .qa-bw-question {
-        padding: 20px;
-        background: #fff;
-        flex-grow: 1;
-      }
+      /* SORU KISMI */
+      .qa-bw-question { padding: 20px; background: #fff; flex-grow: 1; }
       .qa-bw-user {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 10px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: #666;
+        display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+        font-size: 11px; font-weight: 700; text-transform: uppercase; color: #666;
       }
       .qa-bw-user-icon {
-        width: 24px;
-        height: 24px;
-        background: #000;
-        color: #fff;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
+        width: 24px; height: 24px; background: #000; color: #fff;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px;
       }
-      .qa-bw-q-text {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 600;
-        color: #000;
-        line-height: 1.5;
-        font-style: italic;
-      }
+      .qa-bw-q-text { margin: 0; font-size: 15px; font-weight: 600; color: #000; line-height: 1.5; font-style: italic; }
 
-      /* ANSWER PART */
-      .qa-bw-answer {
-        padding: 20px;
-        background: #f9f9f9;
-        border-top: 1px solid #ddd;
-        position: relative;
-      }
+      /* CEVAP KISMI */
+      .qa-bw-answer { padding: 20px; background: #f9f9f9; border-top: 1px solid #ddd; position: relative; }
       .qa-bw-brand {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 8px;
-        font-size: 11px;
-        font-weight: 900;
-        text-transform: uppercase;
-        color: #000;
+        display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+        font-size: 11px; font-weight: 900; text-transform: uppercase; color: #000;
       }
-      .qa-bw-a-text {
-        margin: 0;
-        font-size: 14px;
-        color: #333;
-        line-height: 1.6;
-      }
-      .qa-bw-date {
-        margin-top: 12px;
-        font-size: 10px;
-        color: #999;
-        text-align: right;
-        font-family: monospace;
-      }
+      .qa-bw-a-text { margin: 0; font-size: 14px; color: #333; line-height: 1.6; }
+      .qa-bw-date { margin-top: 12px; font-size: 10px; color: #999; text-align: right; font-family: monospace; }
     </style>
 
     <div class="qa-bw-container">
@@ -154,33 +137,45 @@ export const loader = async ({ request }) => {
         <span class="qa-bw-count">${questions.length} KAYIT</span>
       </div>
 
-      <div class="qa-bw-slider">
-        ${questions.map(q => `
-          <div class="qa-bw-card">
-            
-            <div class="qa-bw-question">
-              <div class="qa-bw-user">
-                <div class="qa-bw-user-icon">
-                  ${(q.customer || 'Z').charAt(0).toUpperCase()}
+      <div class="qa-slider-wrapper">
+        
+        <button class="qa-nav-btn" onclick="document.getElementById('qa-scroller').scrollBy({left: -320, behavior: 'smooth'})">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
+        <div class="qa-bw-slider" id="qa-scroller">
+          ${questions.map(q => `
+            <div class="qa-bw-card">
+              
+              <div class="qa-bw-question">
+                <div class="qa-bw-user">
+                  <div class="qa-bw-user-icon">
+                    ${(q.customer || 'Z').charAt(0).toUpperCase()}
+                  </div>
+                  <span>${q.customer || 'Ziyaretçi'}</span>
                 </div>
-                <span>${q.customer || 'Ziyaretçi'}</span>
+                <p class="qa-bw-q-text">"${q.question}"</p>
               </div>
-              <p class="qa-bw-q-text">"${q.question}"</p>
-            </div>
 
-            <div class="qa-bw-answer">
-              <div class="qa-bw-brand">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                Comix Life Yanıtı
+              <div class="qa-bw-answer">
+                <div class="qa-bw-brand">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                  Comix Life Yanıtı
+                </div>
+                <p class="qa-bw-a-text">${q.answer}</p>
+                <div class="qa-bw-date">
+                  ${new Date(q.createdAt).toLocaleDateString('tr-TR')}
+                </div>
               </div>
-              <p class="qa-bw-a-text">${q.answer}</p>
-              <div class="qa-bw-date">
-                ${new Date(q.createdAt).toLocaleDateString('tr-TR')}
-              </div>
-            </div>
 
-          </div>
-        `).join('')}
+            </div>
+          `).join('')}
+        </div>
+
+        <button class="qa-nav-btn" onclick="document.getElementById('qa-scroller').scrollBy({left: 320, behavior: 'smooth'})">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+
       </div>
 
     </div>
@@ -189,33 +184,35 @@ export const loader = async ({ request }) => {
   return { html: htmlContent };
 };
 
-// --- ACTION (POST): Save Question ---
+// --- ACTION (POST): Soru Kaydetme ---
 export const action = async ({ request }) => {
   const { session } = await authenticate.public.appProxy(request);
-  // We proceed even if session is missing to avoid blocking users
   
   const formData = await request.formData();
   const productId = formData.get("productId");
   const productTitle = formData.get("productTitle");
   const customer = formData.get("customer") || "Ziyaretçi";
   const question = formData.get("question");
+  const email = formData.get("email"); // E-postayı aldık
 
   if (!question || !productId) {
     return { success: false, message: "Eksik bilgi." };
   }
 
+  // Veritabanına Kayıt (E-posta ile birlikte)
   await db.question.create({
     data: {
       productId: String(productId),
       productName: String(productTitle),
       customer: String(customer),
       question: String(question),
+      email: String(email || ""), // DB'ye kaydet (Admin görür)
       status: "PENDING"
     }
   });
 
   return { 
-    success: true,
+    success: true, 
     message: "Sorunuz başarıyla alındı. Onaylandıktan sonra yayınlanacaktır." 
   };
 };
