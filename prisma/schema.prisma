@@ -35,9 +35,10 @@ model Question {
   productId   String
   productName String?
   customer    String
+  email       String?  // <--- İŞTE EKSİK OLAN BU! (Bunu ekliyoruz)
   question    String
   answer      String?
-  status      String   @default("PENDING") // PENDING veya PUBLISHED
+  status      String   @default("PENDING")
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt  // ← BUNU EKLE
+  updatedAt   DateTime @updatedAt
 }
