@@ -2,17 +2,31 @@
 
 client_id = "e21e188c4cf7670e928fa4cc1a26d104"
 name = "Comix Soru Cevap Paneli"
-application_url = "https://example.com"
+handle = "comix-soru-cevap-paneli"
+# 👇 KRİTİK DÜZELTME: Render Linkin
+application_url = "https://comix-qa-app-livee.onrender.com"
 embedded = true
 
+[build]
+automatically_update_urls_on_dev = true
+
 [webhooks]
-api_version = "2025-10"
+api_version = "2024-10"
 
 [access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
-optional_scopes = [ ]
-use_legacy_install_flow = false
+# 👇 YETKİLERİ EKLEDİK
+scopes = "write_products,read_products,write_metaobjects,read_metaobjects,write_metaobject_definitions,read_metaobject_definitions"
 
 [auth]
-redirect_urls = [ ]
+# 👇 YÖNLENDİRME LİNKLERİNİ DOLDURDUK
+redirect_urls = [
+  "https://comix-qa-app-livee.onrender.com/auth/callback",
+  "https://comix-qa-app-livee.onrender.com/auth/shopify/callback",
+  "https://comix-qa-app-livee.onrender.com/api/auth/callback"
+]
+
+[app_proxy]
+# 👇 SİTEDE GÖRÜNMESİ İÇİN PROXY AYARI (Bu sende eksikti!)
+url = "https://comix-qa-app-livee.onrender.com/app/proxy"
+subpath = "destek"
+prefix = "apps"

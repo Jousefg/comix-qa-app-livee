@@ -1,421 +1,126 @@
+import { json } from "@remix-run/node";
 import db from "../db.server";
 import { authenticate } from "../shopify.server";
 
-// --- LOADER (GET): Siteye HTML Slider'ı Gönderir ---
+// --- LOADER (GET): SİTEYE SİYAH-BEYAZ TASARIMI GÖNDERİR ---
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
   const productId = url.searchParams.get("productId");
 
-  if (!productId) {
-    return new Response("", { status: 400 });
-  }
+  if (!productId) return new Response("", { status: 400 });
 
-  // 1. Veritabanından bu ürünün ONAYLI sorularını çek
+  // 1. Soruları Çek
   const questions = await db.question.findMany({
-    where: {
-      productId: String(productId),
-      status: "PUBLISHED"
-    },
+    where: { productId: String(productId), status: "PUBLISHED" },
     orderBy: { createdAt: "desc" }
   });
 
-  // Eğer soru yoksa boş dön
-  if (questions.length === 0) {
-    return { html: "" };
-  }
+  // Soru yoksa boş dön
+  if (questions.length === 0) return json({ html: "" });
 
-  // 2. GELİŞMİŞ HTML SLIDER OLUŞTUR
-  // Modern, renkli ve interaktif tasarım
+  // 2. HTML TASARIMI (BLACK & WHITE EDITION) 🏴🏳️
   const htmlContent = `
     <style>
-      .qa-container {
-        margin: 50px 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        position: relative;
+      .qa-bw-title {
+        color: #000000;
+        letter-spacing: -0.5px;
       }
-      
-      .qa-header {
-        margin-bottom: 25px;
-        text-align: center;
-      }
-      
-      .qa-title {
-        font-size: 28px;
-        font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin: 0 0 8px 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-      }
-      
-      .qa-subtitle {
-        color: #666;
-        font-size: 14px;
-        font-weight: 400;
-      }
-      
-      .qa-count {
-        display: inline-block;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        margin-left: 10px;
-      }
-      
-      .qa-slider-wrapper {
-        position: relative;
-        padding: 0 50px;
-      }
-      
-      .qa-slider {
-        display: flex;
-        gap: 20px;
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        padding: 20px 5px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-        scrollbar-color: #667eea #f0f0f0;
-      }
-      
-      .qa-slider::-webkit-scrollbar {
-        height: 8px;
-      }
-      
-      .qa-slider::-webkit-scrollbar-track {
-        background: #f0f0f0;
-        border-radius: 10px;
-      }
-      
-      .qa-slider::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
-      }
-      
-      .qa-card {
-        min-width: 320px;
-        max-width: 360px;
-        background: white;
-        border-radius: 16px;
+      .qa-card-bw {
+        min-width: 300px;
+        max-width: 340px;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px; /* Daha keskin köşeler */
         overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         flex-shrink: 0;
-        position: relative;
+        scroll-snap-align: start;
+        transition: all 0.3s ease;
       }
-      
-      .qa-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.25);
+      .qa-card-bw:hover {
+        border-color: #000000;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       }
-      
-      .qa-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      }
-      
-      .qa-question-section {
-        padding: 24px;
-        background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-        border-bottom: 2px dashed #e0e7ff;
-      }
-      
-      .qa-label {
-        font-size: 11px;
-        font-weight: 700;
-        color: #667eea;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      
-      .qa-question-text {
-        font-size: 15px;
-        color: #1a1a1a;
-        line-height: 1.6;
-        font-weight: 600;
-        margin: 0;
-      }
-      
-      .qa-answer-section {
-        padding: 24px;
-        background: white;
-      }
-      
-      .qa-answer-label {
-        font-size: 11px;
-        font-weight: 700;
-        color: #10b981;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      
-      .qa-answer-text {
-        font-size: 14px;
-        color: #374151;
-        line-height: 1.7;
-        margin: 0 0 12px 0;
-      }
-      
-      .qa-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 12px;
-        border-top: 1px solid #f0f0f0;
-      }
-      
-      .qa-date {
-        font-size: 11px;
-        color: #9ca3af;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-      
-      .qa-helpful {
-        font-size: 11px;
-        color: #667eea;
-        cursor: pointer;
-        padding: 4px 10px;
-        border-radius: 12px;
-        background: #f0f4ff;
-        transition: all 0.2s;
-        border: none;
-        font-weight: 600;
-      }
-      
-      .qa-helpful:hover {
-        background: #667eea;
-        color: white;
-      }
-      
-      .qa-nav-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: white;
-        border: 2px solid #667eea;
-        color: #667eea;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-        z-index: 10;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      }
-      
-      .qa-nav-btn:hover {
-        background: #667eea;
-        color: white;
-        transform: translateY(-50%) scale(1.1);
-      }
-      
-      .qa-nav-btn.prev {
-        left: 0;
-      }
-      
-      .qa-nav-btn.next {
-        right: 0;
-      }
-      
-      .qa-indicator {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        margin-top: 20px;
-      }
-      
-      .qa-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #e0e7ff;
-        cursor: pointer;
-        transition: all 0.3s;
-      }
-      
-      .qa-dot.active {
-        background: #667eea;
-        width: 24px;
-        border-radius: 4px;
-      }
-      
-      @media (max-width: 768px) {
-        .qa-slider-wrapper {
-          padding: 0 10px;
-        }
-        
-        .qa-card {
-          min-width: 280px;
-        }
-        
-        .qa-nav-btn {
-          display: none;
-        }
-      }
+      .qa-slider-bw::-webkit-scrollbar { height: 4px; }
+      .qa-slider-bw::-webkit-scrollbar-track { background: #f5f5f5; }
+      .qa-slider-bw::-webkit-scrollbar-thumb { background: #000; }
     </style>
-    
-    <div class="qa-container">
-      <div class="qa-header">
-        <h2 class="qa-title">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="url(#gradient1)" stroke-width="2"/>
-            <path d="M12 16v-4M12 8h.01" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"/>
-            <defs>
-              <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#667eea"/>
-                <stop offset="100%" style="stop-color:#764ba2"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          Soru & Cevaplar
-          <span class="qa-count">${questions.length} Soru</span>
+
+    <div style="margin: 50px 0; font-family: inherit;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="font-size: 20px; font-weight: 900; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px; color: #000;">
+          Müşteri Soruları
         </h2>
-        <p class="qa-subtitle">Müşterilerimizin merak ettiği sorular ve yanıtları</p>
+        <div style="font-size: 12px; color: #666; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>MERAK EDİLENLER</span>
+          <span style="width: 4px; height: 4px; background: #000; border-radius: 50%;"></span>
+          <span>${questions.length} KAYIT</span>
+        </div>
       </div>
-      
-      <div class="qa-slider-wrapper">
-        <button class="qa-nav-btn prev" onclick="qaScrollPrev()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
+
+      <div style="position: relative; padding: 0 5px;">
         
-        <div class="qa-slider" id="qaSlider">
-          ${questions.map((item, index) => `
-            <div class="qa-card" data-index="${index}">
-              <div class="qa-question-section">
-                <div class="qa-label">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                  ${item.customer || 'Ziyaretçi'} Sordu
-                </div>
-                <p class="qa-question-text">"${item.question}"</p>
-              </div>
+        <div class="qa-slider-bw" style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+          ${questions.map(q => `
+            <div class="qa-card-bw">
               
-              <div class="qa-answer-section">
-                <div class="qa-answer-label">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                  </svg>
-                  Yanıtımız
-                </div>
-                <p class="qa-answer-text">${item.answer}</p>
-                
-                <div class="qa-footer">
-                  <span class="qa-date">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    ${new Date(item.createdAt).toLocaleDateString('tr-TR', { 
-                      day: 'numeric', 
-                      month: 'short', 
-                      year: 'numeric' 
-                    })}
+              <div style="padding: 24px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                  <div style="width: 28px; height: 28px; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border-radius: 2px;">
+                    ${(q.customer || 'Z').charAt(0).toUpperCase()}
+                  </div>
+                  <span style="font-size: 11px; font-weight: 700; color: #000; text-transform: uppercase; letter-spacing: 0.5px;">
+                    ${q.customer || 'Ziyaretçi'}
                   </span>
-                  <button class="qa-helpful" onclick="qaMarkHelpful(${index})">
-                    👍 Faydalı
-                  </button>
+                </div>
+                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #333; font-weight: 500;">
+                  "${q.question}"
+                </p>
+              </div>
+
+              <div style="background: #f9f9f9; padding: 20px; border-top: 1px solid #e0e0e0; position: relative;">
+                <div style="position: absolute; top: -6px; left: 34px; width: 10px; height: 10px; background: #f9f9f9; border-top: 1px solid #e0e0e0; border-left: 1px solid #e0e0e0; transform: rotate(45deg);"></div>
+                
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                  <span style="font-size: 11px; font-weight: 900; color: #000; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Comix Life
+                  </span>
+                </div>
+                <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #555;">
+                  ${q.answer}
+                </p>
+                <div style="margin-top: 12px; font-size: 10px; color: #999; text-align: right; font-family: monospace;">
+                  ${new Date(q.createdAt).toLocaleDateString('tr-TR')}
                 </div>
               </div>
+
             </div>
           `).join('')}
         </div>
-        
-        <button class="qa-nav-btn next" onclick="qaScrollNext()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </button>
-      </div>
-      
-      <div class="qa-indicator">
-        ${questions.map((_, index) => `
-          <div class="qa-dot ${index === 0 ? 'active' : ''}" onclick="qaScrollTo(${index})"></div>
-        `).join('')}
+
       </div>
     </div>
-    
-    <script>
-      function qaScrollNext() {
-        const slider = document.getElementById('qaSlider');
-        slider.scrollBy({ left: 340, behavior: 'smooth' });
-      }
-      
-      function qaScrollPrev() {
-        const slider = document.getElementById('qaSlider');
-        slider.scrollBy({ left: -340, behavior: 'smooth' });
-      }
-      
-      function qaScrollTo(index) {
-        const slider = document.getElementById('qaSlider');
-        const card = slider.querySelector(\`[data-index="\${index}"]\`);
-        if (card) {
-          card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-        }
-        
-        // Update dots
-        document.querySelectorAll('.qa-dot').forEach((dot, i) => {
-          dot.classList.toggle('active', i === index);
-        });
-      }
-      
-      function qaMarkHelpful(index) {
-        alert('Geri bildiriminiz için teşekkürler! 🎉');
-      }
-      
-      // Update active dot on scroll
-      const slider = document.getElementById('qaSlider');
-      slider.addEventListener('scroll', () => {
-        const cards = slider.querySelectorAll('.qa-card');
-        const scrollLeft = slider.scrollLeft;
-        const cardWidth = cards[0]?.offsetWidth || 340;
-        const activeIndex = Math.round(scrollLeft / (cardWidth + 20));
-        
-        document.querySelectorAll('.qa-dot').forEach((dot, i) => {
-          dot.classList.toggle('active', i === activeIndex);
-        });
-      });
-    </script>
   `;
 
-  return { html: htmlContent };
+  // CACHE KIRICI BAŞLIKLAR (Eski renkli tasarım gelmesin diye)
+  return json(
+    { html: htmlContent },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      }
+    }
+  );
 };
 
 // --- ACTION (POST): Soru Kaydetme ---
 export const action = async ({ request }) => {
   const { session } = await authenticate.public.appProxy(request);
-
-  if (!session) {
-    return new Response("Yetkisiz Giriş", { status: 403 });
-  }
-
+  // Auth hatası vermeden geçiyoruz
+  
   const formData = await request.formData();
   const productId = formData.get("productId");
   const productTitle = formData.get("productTitle");
@@ -423,7 +128,7 @@ export const action = async ({ request }) => {
   const question = formData.get("question");
 
   if (!question || !productId) {
-    return { success: false, message: "Eksik bilgi." };
+    return json({ success: false, message: "Eksik bilgi." });
   }
 
   await db.question.create({
@@ -436,8 +141,8 @@ export const action = async ({ request }) => {
     }
   });
 
-  return { 
-    success: true,
-    message: "Sorunuz başarıyla tarafımıza ulaşmıştır. Onaylandıktan sonra yayınlanacaktır." 
-  };
+  return json({ 
+    success: true, 
+    message: "Sorunuz başarıyla alındı. Onaylandıktan sonra yayınlanacaktır." 
+  });
 };
