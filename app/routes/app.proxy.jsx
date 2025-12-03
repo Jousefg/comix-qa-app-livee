@@ -190,32 +190,46 @@ export const loader = async ({ request }) => {
 };
 
 // --- ACTION (POST): Save Question ---
-// ... üst kısımlar aynı ...
+// ... üstteki importlar ve loader AYNI KALSIN ...
+
+// --- ACTION (POST): Save Question ---
 export const action = async ({ request }) => {
-  const { session } = await authenticate.public.appProxy(request);
-  const formData = await request.formData();
-  
-  const productId = formData.get("productId");
-  const productTitle = formData.get("productTitle");
-  const customer = formData.get("customer") || "Ziyaretçi";
-  const question = formData.get("question");
-  const email = formData.get("email"); // <--- MAİLİ ALIYORUZ
+  try {
+    const { session } = await authenticate.public.appProxy(request);
+    const formData = await request.formData();
+    
+    const productId = formData.get("productId");
+    const productTitle = formData.get("productTitle");
+    const customer = formData.get("customer") || "Ziyaretçi";
+    const question = formData.get("question");
+    const email = formData.get("email");
 
-  // Email kontrolü
-  if (!question || !productId || !email) {
-    return { success: false, message: "Lütfen e-posta adresinizi ve sorunuzu eksiksiz girin." };
-  }
-
-  await db.question.create({
-    data: {
-      productId: String(productId),
-      productName: String(productTitle),
-      customer: String(customer),
-      email: String(email), // <--- DB'YE YAZIYORUZ
-      question: String(question),
-      status: "PENDING"
+    // Email kontrolü
+    if (!question || !productId || !email) {
+      return { success: false, message: "Lütfen e-posta adresinizi ve sorunuzu eksiksiz girin." };
     }
-  });
 
-  return { success: true, message: "Sorunuz alındı! Yanıtlandığında mail gelecektir." };
+    // DB KAYDI (Try-Catch içinde)
+    await db.question.create({
+      data: {
+        productId: String(productId),
+        productName: String(productTitle),
+        customer: String(customer),
+        email: String(email),
+        question: String(question),
+        status: "PENDING"
+      }
+    });
+
+    return { success: true, message: "Sorunuz alındı! Yanıtlandığında mail gelecektir." };
+
+  } catch (error) {
+    console.error("HATA DETAYI:", error);
+    // Hatanın ne olduğunu müşteriye değil ama console'a dönüyoruz
+    // Eğer veritabanı hatasıysa burada yakalayacağız
+    return { 
+      success: false, 
+      message: "Sunucu Hatası: " + (error.message || "Bilinmeyen bir hata oluştu.") 
+    };
+  }
 };
