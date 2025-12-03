@@ -2,15 +2,15 @@
 
 client_id = "9ed80fb971693748d33c2e3229efe766"
 name = "comix-qa-app"
-# BURASI DEĞİŞTİ: Render Adresimiz
-application_url = "https://comix-qa-app-live.onrender.com"
+# DÜZELTME: live -> livee (Çift 'e' yaptık)
+application_url = "https://comix-qa-app-livee.onrender.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
 
 [webhooks]
-api_version = "2026-01"
+api_version = "2024-10"
 
   [[webhooks.subscriptions]]
   topics = [ "app/uninstalled" ]
@@ -24,15 +24,15 @@ api_version = "2026-01"
 scopes = "write_products,read_products,write_metaobjects,read_metaobjects,write_metaobject_definitions,read_metaobject_definitions"
 
 [auth]
-# BURASI DEĞİŞTİ: Render Auth Linkleri
+# DÜZELTME: live -> livee
 redirect_urls = [
-  "https://comix-qa-app-live.onrender.com/auth/callback",
-  "https://comix-qa-app-live.onrender.com/auth/shopify/callback",
-  "https://comix-qa-app-live.onrender.com/api/auth/callback"
+  "https://comix-qa-app-livee.onrender.com/auth/callback",
+  "https://comix-qa-app-livee.onrender.com/auth/shopify/callback",
+  "https://comix-qa-app-livee.onrender.com/api/auth/callback"
 ]
 
 [app_proxy]
-# BURASI DEĞİŞTİ: Proxy için Render adresi + route yolu
-url = "https://comix-qa-app-live.onrender.com/app/proxy"
+# DÜZELTME: live -> livee
+url = "https://comix-qa-app-livee.onrender.com/app/proxy"
 subpath = "destek"
 prefix = "apps"

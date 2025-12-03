@@ -1,0 +1,89 @@
+{% schema %}
+{
+  "name": "Comix Soru Cevap",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Başlık",
+      "default": "Aklınıza Takılanı Sorun"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Arkaplan Rengi",
+      "default": "#ffffff"
+    }
+  ]
+}
+{% endschema %}
+
+<div id="comix-qna-app-block" style="background: {{ block.settings.bg_color }}; border: 1px solid #e1e3e5; border-radius: 12px; margin: 40px 0; padding: 24px;">
+  
+  <div style="text-align: center; margin-bottom: 20px;">
+    <h3 style="font-size: 20px; font-weight: 700; color: #1a1a1a;">{{ block.settings.heading }}</h3>
+    <p style="color: #666; font-size: 14px;">Ürün hakkında merak ettiklerinizi sorun.</p>
+  </div>
+
+  <form id="qna-app-form" style="max-width: 600px; margin: 0 auto;">
+    <input type="hidden" name="productId" value="{{ product.id }}">
+    <input type="hidden" name="productTitle" value="{{ product.title }}">
+    
+    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+      <input type="text" name="customer" placeholder="Adınız" required style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+      <input type="email" name="email" placeholder="E-posta (Gizli)" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+    </div>
+
+    <textarea name="question" rows="3" placeholder="Sorunuzu buraya yazınız..." required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 15px;"></textarea>
+
+    <button type="submit" id="qna-app-btn" style="width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+      Soruyu Gönder
+    </button>
+    <div id="qna-app-msg" style="margin-top: 10px; text-align: center; font-size: 13px; display: none;"></div>
+  </form>
+
+  <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+
+  <div id="comix-qna-list-target">
+    <div style="text-align: center; color: #999;">Yükleniyor...</div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var productId = "{{ product.id }}";
+  var container = document.getElementById("comix-qna-list-target");
+
+  // 1. SORULARI ÇEK
+  // Cache kırmak için &t= ekledik
+  fetch("/apps/destek?productId=" + productId + "&t=" + new Date().getTime())
+    .then(r => r.json())
+    .then(d => {
+      if(d.html) container.innerHTML = d.html;
+      else container.innerHTML = '<p style="text-align:center; color:#999;">Henüz soru sorulmamış.</p>';
+    });
+
+  // 2. FORMU GÖNDER
+  document.getElementById("qna-app-form").addEventListener("submit", function(e){
+    e.preventDefault();
+    var btn = document.getElementById("qna-app-btn");
+    var msg = document.getElementById("qna-app-msg");
+    
+    btn.disabled = true;
+    btn.innerText = "Gönderiliyor...";
+    
+    fetch("/apps/destek", { method: "POST", body: new FormData(e.target) })
+      .then(r => r.json())
+      .then(d => {
+        msg.style.display = "block";
+        msg.innerText = d.message;
+        msg.style.color = d.success ? "green" : "red";
+        if(d.success) e.target.reset();
+      })
+      .catch(() => { msg.innerText = "Hata oluştu."; msg.style.color = "red"; })
+      .finally(() => { btn.disabled = false; btn.innerText = "Soruyu Gönder"; });
+  });
+});
+</script>
